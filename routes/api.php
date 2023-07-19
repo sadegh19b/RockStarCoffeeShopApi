@@ -13,6 +13,6 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware('auth:sanctum')->get('user', function () {
-    //
+Route::prefix('v1')->as('api.v1.')->group(function () {
+    Route::get('products', [\App\Http\Controllers\ProductController::class, 'index'])->name('products');
 });
