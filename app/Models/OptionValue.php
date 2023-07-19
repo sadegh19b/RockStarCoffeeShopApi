@@ -18,4 +18,9 @@ class OptionValue extends Model
     {
         return $this->belongsToMany(Order::class, 'order_option_value_assignments');
     }
+
+    public function firstOption(): mixed
+    {
+        return $this->options()->wherePivot('option_value_id', $this->pivot->option_value_id)->first();
+    }
 }

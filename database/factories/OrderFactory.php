@@ -41,4 +41,19 @@ class OrderFactory extends Factory
             $order->optionValues()->sync($values);
         });
     }
+
+    public function status(OrderStatus $orderStatus): static
+    {
+        $data['status'] = $orderStatus->value;
+
+        if ($orderStatus === OrderStatus::DELIVERED) {
+            $data['delivered_at'] = now();
+        }
+
+        if ($orderStatus === OrderStatus::CANCELLED) {
+            $data['cancelled_at'] = now();
+        }
+
+        return $this->state(fn (array $attributes) => $data);
+    }
 }

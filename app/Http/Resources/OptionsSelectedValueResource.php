@@ -14,7 +14,7 @@ class OptionsSelectedValueResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        $option = $this->options()->wherePivot('option_value_id', $this->pivot->option_value_id)->first();
+        $option = $this->firstOption();
 
         return [
             'id' => $option->id,

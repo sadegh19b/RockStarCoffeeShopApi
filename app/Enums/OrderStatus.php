@@ -8,6 +8,7 @@ enum OrderStatus: string
     case PREPARATION = 'preparation';
     case READY = 'ready';
     case DELIVERED = 'delivered';
+    case CANCELLED = 'cancelled';
 
     public function getEnglishLabel(): string
     {

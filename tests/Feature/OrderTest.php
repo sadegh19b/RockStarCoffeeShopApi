@@ -3,6 +3,7 @@
 use App\Models\User;
 use App\Models\Order;
 use App\Enums\OrderStatus;
+use App\Notifications\OrderChangeStatusNotification;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Testing\Fluent\AssertableJson;
 use Tests\TestCase;
@@ -138,6 +139,7 @@ class OrderTest extends TestCase
     /** @test */
     public function the_admin_can_change_order_status(): void
     {
+        \Notification::fake();
         $this->actingAs($this->admin);
         $order = Order::factory()->create();
 
@@ -152,6 +154,8 @@ class OrderTest extends TestCase
             'status' => OrderStatus::DELIVERED->value,
             'delivered_at' => $order->fresh()->delivered_at,
         ]);
+
+        \Notification::assertSentTo([$order->user], OrderChangeStatusNotification::class);
     }
 
     /** @test */
@@ -164,28 +168,46 @@ class OrderTest extends TestCase
             'status' => '::test::'
         ])->assertUnprocessable();
 
+        // Without status field
         $this->patchJson(route('api.v1.order.status.update', $order->id))->assertUnprocessable();
+    }
+
+    /** @test */
+    public function the_admin_cannot_change_order_status_when_the_order_delivered_or_cancelled(): void
+    {
+        $this->actingAs($this->admin);
+        $orderDelivered = Order::factory()->status(OrderStatus::DELIVERED)->create();
+        $orderCancelled = Order::factory()->status(OrderStatus::CANCELLED)->create();
+
+        $this->patchJson(route('api.v1.order.status.update', $orderDelivered->id), [
+            'status' => OrderStatus::WAITING->value
+        ])->assertUnprocessable();
+
+        $this->patchJson(route('api.v1.order.status.update', $orderCancelled->id), [
+            'status' => OrderStatus::WAITING->value
+        ])->assertUnprocessable();
     }
 
     /** @test */
     public function the_admin_can_cancel_waiting_orders_status(): void
     {
+        \Notification::fake();
         $this->actingAs($this->admin);
-        $orderWaiting1 = Order::factory()->create(['status' => OrderStatus::WAITING->value]);
-        $orderWaiting2 = Order::factory()->create(['status' => OrderStatus::WAITING->value]);
-        $orderReady = Order::factory()->create(['status' => OrderStatus::READY->value]);
+        $orderWaiting1 = Order::factory()->status(OrderStatus::WAITING)->create();
+        $orderWaiting2 = Order::factory()->status(OrderStatus::WAITING)->create();
+        $orderReady = Order::factory()->status(OrderStatus::READY)->create();
 
         $response = $this->patchJson(route('api.v1.orders.status.update.all'));
 
         $response->assertOk();
         $this->assertDatabaseHas('orders', [
             'id' => $orderWaiting1->id,
-            'status' => $orderWaiting1->status,
+            'status' => OrderStatus::CANCELLED->value,
             'cancelled_at' => $orderWaiting1->fresh()->cancelled_at,
         ]);
         $this->assertDatabaseHas('orders', [
             'id' => $orderWaiting2->id,
-            'status' => $orderWaiting2->status,
+            'status' => OrderStatus::CANCELLED->value,
             'cancelled_at' => $orderWaiting2->fresh()->cancelled_at,
         ]);
         $this->assertDatabaseHas('orders', [
@@ -193,5 +215,10 @@ class OrderTest extends TestCase
             'status' => $orderReady->status,
             'cancelled_at' => null,
         ]);
+
+        \Notification::assertSentTo(
+            [$orderWaiting1->user, $orderWaiting2->user],
+            OrderChangeStatusNotification::class
+        );
     }
 }
