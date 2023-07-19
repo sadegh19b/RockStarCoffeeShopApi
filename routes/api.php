@@ -15,4 +15,9 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->as('api.v1.')->group(function () {
     Route::get('products', [\App\Http\Controllers\ProductController::class, 'index'])->name('products');
+    Route::post('login', [\App\Http\Controllers\AuthController::class, 'login'])->name('login');
+
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::delete('logout', [\App\Http\Controllers\AuthController::class, 'logout'])->name('logout');
+    });
 });
