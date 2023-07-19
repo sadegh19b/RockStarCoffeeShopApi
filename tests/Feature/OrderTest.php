@@ -131,6 +131,7 @@ class OrderTest extends TestCase
             'status' => OrderStatus::PREPARATION->value
         ])->assertForbidden();
 
+        // Also, User cannot cancel all waiting orders
         $this->patchJson(route('api.v1.orders.status.update.all'))->assertForbidden();
     }
 
@@ -146,7 +147,7 @@ class OrderTest extends TestCase
 
         $response->assertOk();
         $this->assertDatabaseHas('orders', [
-            'user_id' => $this->admin->id,
+            'id' => $order->id,
             'product_id' => $order->product_id,
             'status' => OrderStatus::DELIVERED->value,
             'delivered_at' => $order->fresh()->delivered_at,
@@ -167,7 +168,7 @@ class OrderTest extends TestCase
     }
 
     /** @test */
-    public function the_admin_can_change_waiting_orders_status(): void
+    public function the_admin_can_cancel_waiting_orders_status(): void
     {
         $this->actingAs($this->admin);
         $orderWaiting1 = Order::factory()->create(['status' => OrderStatus::WAITING->value]);
