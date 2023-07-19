@@ -28,6 +28,10 @@ class OrderStatusController extends Controller
             $data['delivered_at'] = now();
         }
 
+        if ($data['status'] === OrderStatus::CANCELLED->value) {
+            $data['cancelled_at'] = now();
+        }
+
         $order->update($data);
 
         return $this->jsonResponse('Success!', OrderResource::make($order));
