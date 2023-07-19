@@ -104,7 +104,7 @@ class OrderTest extends TestCase
     public function the_user_can_view_his_order(): void
     {
         $this->actingAs($this->user);
-        $order = Order::factory()->create();
+        $order = Order::factory()->create(['user_id' => $this->user->id]);
 
         $response = $this->getJson(route('api.v1.order.show', $order->id));
 
@@ -120,6 +120,21 @@ class OrderTest extends TestCase
                         ->etc();
                 });
         });
+    }
+
+    /** @test */
+    public function the_user_cannot_view_another_users_order_only_admin_can_view(): void
+    {
+        $orderUser = Order::factory()->create(['user_id' => $this->user->id]);
+        $orderAdmin = Order::factory()->create(['user_id' => $this->admin->id]);
+
+        $this->actingAs($this->user)
+            ->getJson(route('api.v1.order.show', $orderAdmin->id))
+            ->assertForbidden();
+
+        $this->actingAs($this->admin)
+            ->getJson(route('api.v1.order.show', $orderUser->id))
+            ->assertOk();
     }
 
     /** @test */
