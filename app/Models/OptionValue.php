@@ -13,4 +13,9 @@ class OptionValue extends Model
     {
         return $this->belongsToMany(Option::class, 'option_value_assignments');
     }
+
+    public function orders(): BelongsToMany
+    {
+        return $this->belongsToMany(Order::class, 'order_option_value_assignments');
+    }
 }

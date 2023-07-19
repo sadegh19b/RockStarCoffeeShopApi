@@ -19,5 +19,13 @@ Route::prefix('v1')->as('api.v1.')->group(function () {
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::delete('logout', [\App\Http\Controllers\AuthController::class, 'logout'])->name('logout');
+
+        Route::post('order', [\App\Http\Controllers\OrderController::class, 'store'])->name('order.store');
+        Route::get('order/{order}', [\App\Http\Controllers\OrderController::class, 'show'])->name('order.show');
+
+        Route::middleware('is_admin')->group(function () {
+            Route::patch('order/{order}/status', [\App\Http\Controllers\OrderStatusController::class, 'update'])->name('order.status.update');
+            Route::patch('orders/status', [\App\Http\Controllers\OrderStatusController::class, 'updateAll'])->name('orders.status.update.all');
+        });
     });
 });

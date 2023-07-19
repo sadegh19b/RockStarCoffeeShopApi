@@ -14,4 +14,9 @@ class Product extends Model
     {
         return $this->belongsToMany(Option::class, 'option_product_assignments');
     }
+
+    public function orders(): HasMany
+    {
+        return $this->hasMany(Order::class);
+    }
 }
